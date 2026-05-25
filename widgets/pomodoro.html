@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomodoro</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=DM+Mono:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --blue: #3b9eff;
+        --blue-dim: rgba(59, 158, 255, 0.12);
+        --purple: #9b6dff;
+        --purple-dim: rgba(155, 109, 255, 0.12);
+        --green: #3bffb0;
+        --gold: #ffd166;
+        --text: #e0e0f0;
+        --muted: #4a4a6a;
+        --bg: #0d0d14;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Rajdhani", sans-serif;
+        overflow: hidden;
+      }
+
+      .widget {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        animation: fadeIn 0.7s ease forwards;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Mode tabs */
+      .tabs {
+        display: flex;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        padding: 3px;
+      }
+
+      .tab {
+        font-family: "DM Mono", monospace;
+        font-size: 0.55rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 4px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.25s ease;
+      }
+
+      .tab.active-work {
+        background: var(--blue-dim);
+        color: var(--blue);
+        box-shadow: 0 0 12px rgba(59, 158, 255, 0.15);
+      }
+
+      .tab.active-break {
+        background: var(--purple-dim);
+        color: var(--purple);
+        box-shadow: 0 0 12px rgba(155, 109, 255, 0.15);
+      }
+
+      /* Arc ring */
+      .ring-wrap {
+        position: relative;
+        width: 100px;
+        height: 100px;
+      }
+
+      .ring-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .ring-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 3;
+      }
+
+      .ring-fg {
+        fill: none;
+        stroke: var(--blue);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-dasharray: 283;
+        stroke-dashoffset: 0;
+        filter: drop-shadow(0 0 5px rgba(59, 158, 255, 0.6));
+        transition:
+          stroke-dashoffset 1s linear,
+          stroke 0.4s ease,
+          filter 0.4s ease;
+      }
+
+      .ring-fg.break-mode {
+        stroke: var(--purple);
+        filter: drop-shadow(0 0 5px rgba(155, 109, 255, 0.6));
+      }
+
+      /* Timer text inside ring */
+      .ring-inner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+      }
+
+      .timer-display {
+        font-family: "DM Mono", monospace;
+        font-size: 1.45rem;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        color: var(--blue);
+        line-height: 1;
+        transition: color 0.4s ease;
+      }
+
+      .timer-display.break-mode {
+        color: var(--purple);
+      }
+
+      .session-count {
+        font-family: "DM Mono", monospace;
+        font-size: 0.5rem;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+      }
+
+      /* Controls */
+      .controls {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .btn {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 5px 14px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: var(--blue-dim);
+        border-color: rgba(59, 158, 255, 0.3);
+        color: var(--blue);
+      }
+
+      .btn-primary:hover {
+        background: rgba(59, 158, 255, 0.2);
+        box-shadow: 0 0 14px rgba(59, 158, 255, 0.25);
+      }
+
+      .btn-primary.break-mode {
+        background: var(--purple-dim);
+        border-color: rgba(155, 109, 255, 0.3);
+        color: var(--purple);
+      }
+
+      .btn-primary.break-mode:hover {
+        background: rgba(155, 109, 255, 0.2);
+        box-shadow: 0 0 14px rgba(155, 109, 255, 0.25);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.08);
+        color: var(--muted);
+      }
+
+      .btn-ghost:hover {
+        border-color: rgba(255, 255, 255, 0.18);
+        color: var(--text);
+      }
+
+      /* Status label */
+      .status {
+        font-family: "DM Mono", monospace;
+        font-size: 0.52rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--muted);
+        height: 12px;
+      }
+
+      .status.work {
+        color: var(--blue);
+        opacity: 0.7;
+      }
+      .status.brk {
+        color: var(--purple);
+        opacity: 0.7;
+      }
+
+      /* Completion flash */
+      @keyframes flash {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .flash {
+        animation: flash 0.5s ease 3;
+      }
+
+      /* Sessions dots */
+      .dots {
+        display: flex;
+        gap: 4px;
+        margin-top: -2px;
+      }
+
+      .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        transition: background 0.3s ease;
+      }
+
+      .dot.done-work {
+        background: var(--blue);
+        box-shadow: 0 0 5px rgba(59, 158, 255, 0.5);
+      }
+      .dot.done-break {
+        background: var(--purple);
+        box-shadow: 0 0 5px rgba(155, 109, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="widget">
+      <div class="tabs">
+        <button class="tab active-work" id="tab-work" onclick="setMode('work')">
+          Focus
+        </button>
+        <button class="tab" id="tab-break" onclick="setMode('break')">
+          Break
+        </button>
+      </div>
+
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="45" />
+          <circle class="ring-fg" cx="50" cy="50" r="45" id="ring" />
+        </svg>
+        <div class="ring-inner">
+          <div class="timer-display" id="display">25:00</div>
+          <div class="session-count" id="session-label">session 1</div>
+        </div>
+      </div>
+
+      <div class="dots" id="dots">
+        <div class="dot" id="d0"></div>
+        <div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="start-btn" onclick="toggleTimer()">
+          Start
+        </button>
+        <button class="btn btn-ghost" onclick="resetTimer()">Reset</button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <script>
+      const WORK_MINS = 25;
+      const BREAK_MINS = 5;
+      const CIRCUMFERENCE = 2 * Math.PI * 45; // ≈ 282.74
+
+      let mode = "work"; // 'work' | 'break'
+      let running = false;
+      let remaining = WORK_MINS * 60;
+      let total = WORK_MINS * 60;
+      let interval = null;
+      let sessions = 0; // completed work sessions
+
+      const displayEl = document.getElementById("display");
+      const ringEl = document.getElementById("ring");
+      const startBtn = document.getElementById("start-btn");
+      const statusEl = document.getElementById("status");
+      const sessionLbl = document.getElementById("session-label");
+
+      function setMode(m) {
+        mode = m;
+        running = false;
+        clearInterval(interval);
+
+        if (m === "work") {
+          total = WORK_MINS * 60;
+          remaining = total;
+          document.getElementById("tab-work").className = "tab active-work";
+          document.getElementById("tab-break").className = "tab";
+          ringEl.classList.remove("break-mode");
+          displayEl.classList.remove("break-mode");
+          startBtn.classList.remove("break-mode");
+        } else {
+          total = BREAK_MINS * 60;
+          remaining = total;
+          document.getElementById("tab-work").className = "tab";
+          document.getElementById("tab-break").className = "tab active-break";
+          ringEl.classList.add("break-mode");
+          displayEl.classList.add("break-mode");
+          startBtn.classList.add("break-mode");
+        }
+
+        startBtn.textContent = "Start";
+        statusEl.textContent = "";
+        statusEl.className = "status";
+        render();
+      }
+
+      function toggleTimer() {
+        if (!running) {
+          running = true;
+          startBtn.textContent = "Pause";
+          statusEl.textContent =
+            mode === "work" ? "Deep work — stay in." : "Rest. You earned it.";
+          statusEl.className = "status " + (mode === "work" ? "work" : "brk");
+          interval = setInterval(tick, 1000);
+        } else {
+          running = false;
+          startBtn.textContent = "Resume";
+          statusEl.textContent = "Paused";
+          statusEl.className = "status";
+          clearInterval(interval);
+        }
+      }
+
+      function resetTimer() {
+        clearInterval(interval);
+        running = false;
+        remaining = total;
+        startBtn.textContent = "Start";
+        statusEl.textContent = "";
+        statusEl.className = "status";
+        render();
+      }
+
+      function tick() {
+        if (remaining <= 0) {
+          clearInterval(interval);
+          running = false;
+          complete();
+          return;
+        }
+        remaining--;
+        render();
+      }
+
+      function complete() {
+        displayEl.classList.add("flash");
+        setTimeout(() => displayEl.classList.remove("flash"), 1600);
+
+        if (mode === "work") {
+          sessions = Math.min(sessions + 1, 4);
+          updateDots();
+          statusEl.textContent = "✓ Session done — take a break";
+          statusEl.className = "status work";
+          startBtn.textContent = "Start";
+        } else {
+          statusEl.textContent = "✓ Break over — back to work";
+          statusEl.className = "status brk";
+          startBtn.textContent = "Start";
+        }
+      }
+
+      function updateDots() {
+        for (let i = 0; i < 4; i++) {
+          const d = document.getElementById("d" + i);
+          if (i < sessions) {
+            d.className = mode === "work" ? "dot done-work" : "dot done-break";
+          } else {
+            d.className = "dot";
+          }
+        }
+        if (sessions >= 4) {
+          // reset after full cycle
+          setTimeout(() => {
+            sessions = 0;
+            updateDots();
+          }, 3000);
+        }
+      }
+
+      function render() {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        displayEl.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+        const pct = remaining / total;
+        const offset = CIRCUMFERENCE * (1 - pct);
+        ringEl.style.strokeDasharray = CIRCUMFERENCE;
+        ringEl.style.strokeDashoffset = offset;
+
+        sessionLbl.textContent =
+          mode === "work" ? `session ${sessions + 1}` : `break ${sessions}`;
+      }
+
+      // init
+      render();
+    </script>
+  </body>
+</html>

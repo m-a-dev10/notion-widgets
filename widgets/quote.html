@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quote</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700&family=DM+Mono:wght@300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --blue: #3b9eff;
+        --purple: #9b6dff;
+        --gold: #ffd166;
+        --green: #3bffb0;
+        --text: #d8d8ec;
+        --muted: #4e4e6a;
+        --bg: #0d0d14;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Syne", sans-serif;
+        overflow: hidden;
+      }
+
+      .widget {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px 18px;
+        max-width: 420px;
+        width: 100%;
+        animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.55rem;
+        letter-spacing: 0.3em;
+        color: var(--purple);
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+
+      .quote-mark {
+        font-size: 2.2rem;
+        line-height: 0.6;
+        color: var(--blue);
+        opacity: 0.25;
+        font-family: Georgia, serif;
+        margin-bottom: -4px;
+      }
+
+      .quote {
+        font-size: 0.88rem;
+        font-weight: 400;
+        line-height: 1.65;
+        color: var(--text);
+        letter-spacing: 0.01em;
+      }
+
+      .author-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+      }
+
+      .line {
+        width: 20px;
+        height: 1px;
+        background: var(--gold);
+        opacity: 0.6;
+      }
+
+      .author {
+        font-family: "DM Mono", monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        color: var(--gold);
+        opacity: 0.85;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="widget">
+      <div class="label">Today's Signal</div>
+      <div class="quote-mark">"</div>
+      <div class="quote" id="quote"></div>
+      <div class="author-row">
+        <div class="line"></div>
+        <div class="author" id="author"></div>
+      </div>
+    </div>
+
+    <script>
+      const QUOTES = [
+        {
+          q: "You don't have to be great to start, but you have to start to be great.",
+          a: "Zig Ziglar",
+        },
+        { q: "Content is fire. Social media is gasoline.", a: "Jay Baer" },
+        {
+          q: "The best marketing doesn't feel like marketing.",
+          a: "Tom Fishburne",
+        },
+        { q: "Create with the heart. Build with the mind.", a: "Criss Jami" },
+        { q: "Done is better than perfect.", a: "Sheryl Sandberg" },
+        {
+          q: "Your brand is what people say about you when you're not in the room.",
+          a: "Jeff Bezos",
+        },
+        { q: "Stop counting days. Make the days count.", a: "Muhammad Ali" },
+        {
+          q: "The secret of getting ahead is getting started.",
+          a: "Mark Twain",
+        },
+        { q: "Creativity is intelligence having fun.", a: "Albert Einstein" },
+        { q: "If it doesn't sell, it isn't creative.", a: "David Ogilvy" },
+        {
+          q: "The only way to do great work is to love what you do.",
+          a: "Steve Jobs",
+        },
+        {
+          q: "Simplicity is the ultimate sophistication.",
+          a: "Leonardo da Vinci",
+        },
+        {
+          q: "Your audience is one click away from leaving. Earn their attention.",
+          a: "Unknown",
+        },
+        {
+          q: "Build something 100 people love, not something 1 million people kind of like.",
+          a: "Paul Graham",
+        },
+        { q: "Every expert was once a beginner.", a: "Helen Hayes" },
+        { q: "Consistency compounds. Show up daily.", a: "James Clear" },
+        { q: "The more you create, the better you get.", a: "Austin Kleon" },
+        { q: "Ideas are cheap. Execution is everything.", a: "Chris Sacca" },
+        { q: "Your story is your strategy.", a: "Unknown" },
+        { q: "Make something people want.", a: "Paul Graham" },
+        {
+          q: "An idea not coupled with action will never get any bigger than the brain cell it occupied.",
+          a: "Arnold Glasow",
+        },
+        { q: "Be so good they can't ignore you.", a: "Steve Martin" },
+        { q: "Ship often. Ship lousy stuff, but ship.", a: "Seth Godin" },
+        {
+          q: "The audience you want is waiting for the version of you that shows up consistently.",
+          a: "Unknown",
+        },
+        { q: "Talk to your audience like a human, not a brand.", a: "Unknown" },
+        { q: "Volume is the antidote to fear. Create more.", a: "Unknown" },
+        {
+          q: "One post won't change your life. One thousand might.",
+          a: "Unknown",
+        },
+        {
+          q: "The algorithm rewards what the audience already loves.",
+          a: "Unknown",
+        },
+        { q: "Clarity beats cleverness every time.", a: "Unknown" },
+        {
+          q: "Work is a rubber ball. If you drop it, it will bounce back.",
+          a: "James Patterson",
+        },
+        {
+          q: "Stop waiting for inspiration. Inspiration follows action.",
+          a: "Unknown",
+        },
+        {
+          q: "Your niche is not a limitation. It's a superpower.",
+          a: "Unknown",
+        },
+        {
+          q: "Small consistent actions compound into extraordinary results.",
+          a: "James Clear",
+        },
+        {
+          q: "The creator who serves their audience best, wins.",
+          a: "Unknown",
+        },
+        {
+          q: "Creativity without strategy is called art. With strategy, it's called business.",
+          a: "Unknown",
+        },
+        { q: "Document. Don't just create.", a: "Gary Vaynerchuk" },
+        {
+          q: "Your first 100 pieces of content are tuition. Embrace them.",
+          a: "Unknown",
+        },
+        { q: "The riches are in the niches.", a: "Unknown" },
+        { q: "Start before you're ready.", a: "Steven Pressfield" },
+        { q: "Every no gets you closer to yes.", a: "Unknown" },
+        {
+          q: "The best time to build an audience was 10 years ago. The second best time is now.",
+          a: "Unknown",
+        },
+        {
+          q: "Systems over goals. Systems create consistency.",
+          a: "James Clear",
+        },
+        {
+          q: "You can't think your way into a new way of acting. You act your way into a new way of thinking.",
+          a: "Unknown",
+        },
+        {
+          q: "Your next viral post already exists in your head. Write it down.",
+          a: "Unknown",
+        },
+        { q: "Progress is not linear. Keep going anyway.", a: "Unknown" },
+        { q: "Learn in public. Build in public. Win in public.", a: "Unknown" },
+        {
+          q: "Your unique perspective is your unfair advantage.",
+          a: "Unknown",
+        },
+        {
+          q: "The best content answers the question before it's asked.",
+          a: "Unknown",
+        },
+        {
+          q: "Revenue follows value. Create obsessively. Charge confidently.",
+          a: "Unknown",
+        },
+        {
+          q: "One idea executed well beats ten ideas left in drafts.",
+          a: "Unknown",
+        },
+        {
+          q: "Momentum is built by moving, not by planning to move.",
+          a: "Unknown",
+        },
+        {
+          q: "The algorithm is just a mirror of human attention.",
+          a: "Unknown",
+        },
+        { q: "Specificity is the enemy of mediocrity.", a: "Unknown" },
+        {
+          q: "Your audience doesn't want perfection. They want truth.",
+          a: "Unknown",
+        },
+        {
+          q: "The most dangerous phrase is 'I'll post it when it's ready.'",
+          a: "Unknown",
+        },
+        {
+          q: "A good plan executed today beats a perfect plan executed next week.",
+          a: "George Patton",
+        },
+        {
+          q: "The creator economy rewards those who teach what they know.",
+          a: "Unknown",
+        },
+        {
+          q: "You are one piece of content away from someone's life changing.",
+          a: "Unknown",
+        },
+        {
+          q: "Discipline is the bridge between goals and accomplishment.",
+          a: "Jim Rohn",
+        },
+        {
+          q: "Content is the cost of entry. Community is the moat.",
+          a: "Unknown",
+        },
+        {
+          q: "The gap between who you are and who you want to be is filled by daily action.",
+          a: "Unknown",
+        },
+        {
+          q: "Build systems that create content even when you don't feel like it.",
+          a: "Unknown",
+        },
+        { q: "Master one platform before chasing another.", a: "Unknown" },
+        {
+          q: "The right message to the right person at the right time — that's the whole game.",
+          a: "Unknown",
+        },
+        {
+          q: "Success is the sum of small efforts repeated day in and day out.",
+          a: "Robert Collier",
+        },
+      ];
+
+      function getDayIndex() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = now - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        const day = Math.floor(diff / oneDay);
+        return day % QUOTES.length;
+      }
+
+      const q = QUOTES[getDayIndex()];
+      document.getElementById("quote").textContent = q.q;
+      document.getElementById("author").textContent = q.a;
+    </script>
+  </body>
+</html>
